@@ -32,7 +32,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    model.aibrix.ai/name: deepseek-r1-distill-llama-8b # Note: The label value model.aibrix.ai/name here must match with the service name.
+    model.aibrix.ai/name: deepseek-r1-distill-llama-8b
     model.aibrix.ai/port: "8000"
   name: deepseek-r1-distill-llama-8b
   namespace: default
@@ -46,6 +46,11 @@ spec:
       labels:
         model.aibrix.ai/name: deepseek-r1-distill-llama-8b
     spec:
+      tolerations:
+        - key: "sku"
+          operator: "Equal"
+          value: "gpu"
+          effect: "NoSchedule"
       containers:
         - command:
             - python3
@@ -60,10 +65,9 @@ spec:
             - --model
             - deepseek-ai/DeepSeek-R1-Distill-Llama-8B
             - --served-model-name
-            # Note: The --served-model-name argument value must also match the Service name and the Deployment label model.aibrix.ai/name
             - deepseek-r1-distill-llama-8b
             - --max-model-len
-            - "12288" # 24k length, this is to avoid "The model's max seq len (131072) is larger than the maximum number of tokens that can be stored in KV cache" issue.
+            - "12288"
           image: vllm/vllm-openai:v0.7.1
           imagePullPolicy: IfNotPresent
           name: vllm-openai
@@ -102,9 +106,7 @@ spec:
             periodSeconds: 5
             successThreshold: 1
             timeoutSeconds: 1
-
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -114,7 +116,7 @@ metadata:
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "8080"
-  name: deepseek-r1-distill-llama-8b # Note: The Service name must match the label value $(model.aibrix.ai/name) in the Deployment
+  name: deepseek-r1-distill-llama-8b
   namespace: default
 spec:
   ports:
@@ -130,3 +132,15 @@ spec:
     model.aibrix.ai/name: deepseek-r1-distill-llama-8b
   type: ClusterIP
 EOF
+
+
+# try it out 
+kubectl port-forward svc/deepseek-r1-distill-llama-8b 8000:8000
+curl http://localhost:8000/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+        "model": "deepseek-r1-distill-llama-8b",
+        "prompt": "here is a beautiful poem about a strawberry called mr red: there once was a strawberry, his name was mr red.",
+        "max_tokens": 700,
+        "temperature": 0
+      }'
