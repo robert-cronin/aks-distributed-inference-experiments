@@ -1,0 +1,74 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Adds namespace to all resources.
+namespace: aibrix-system
+
+# Value of this field is prepended to the
+# names of all resources, e.g. a deployment named
+# "wordpress" becomes "alices-wordpress".
+# Note that it should also match with the prefix (text before '-') of the namespace
+# field above.
+namePrefix: aibrix-
+
+# Labels to add to all resources and selectors.
+#labels:
+#- includeSelectors: true
+#  pairs:
+#    someName: someValue
+
+resources:
+- ../namespace
+- ../crd
+- ../rbac
+- ../manager
+- ../gateway
+- ../metadata
+- ../gpu-optimizer
+- ../dependency/kuberay-operator
+# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
+# crd/kustomization.yaml
+- ../webhook
+
+# [INTERNALCERT]
+- ../internalcert
+
+# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'. 'WEBHOOK' components are required.
+#- ../certmanager
+# [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'.
+#- ../prometheus
+
+patches:
+- patch: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: kuberay-operator
+    subjects:
+      - kind: ServiceAccount
+        name: aibrix-kuberay-operator
+        namespace: aibrix-system
+
+- patch: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: kuberay-operator-leader-election
+    subjects:
+      - kind: ServiceAccount
+        name: aibrix-kuberay-operator-leader-election
+        namespace: aibrix-system
+# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
+# crd/kustomization.yaml
+- path: manager_webhook_patch.yaml
+
+images:
+  - name: controller
+    newName: aibrix/controller-manager
+    newTag: nightly
+  - name: gateway-plugins
+    newName: aibrix/gateway-plugins
+    newTag: nightly
+  - name: metadata-service
+    newName: aibrix/metadata-service
+    newTag: nightly
