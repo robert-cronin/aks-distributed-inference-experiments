@@ -2,9 +2,8 @@
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
-helm repo add kuberay https://ray-project.github.io/kuberay-helm/
-
-helm upgrade --install kuberay-operator kuberay/kuberay-operator --version 1.3.0
+# helm repo add kuberay https://ray-project.github.io/kuberay-helm/
+# helm upgrade --install kuberay-operator kuberay/kuberay-operator --version 1.3.0
 
 # # amd64
 # helm install raycluster kuberay/ray-cluster --version 1.3.0

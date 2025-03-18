@@ -14,13 +14,15 @@
 # curl -X POST -H 'Content-Type: application/json' rayservice-sample-serve-svc:8000/calc/ -d '["MUL", 3]'
 # # [Expected output]: "15 pizzas please!"
 
-# ======================== Analytics & Logging ========================
-# # forward grafana
-# kubectl port-forward -n prometheus-system  svc/prometheus-grafana 3000:80
-# forward ray dashboard
-# port-forward svc/rayservice-sample-head-svc 8265:8265
+echo "Forwarding the Ray dashboard..."
+echo "http://localhost:8265"
+# dont forget to forward grafana!
+kubectl port-forward svc/core-raycluster-head-svc 8265:8265 &
+# forward grafana
+kubectl port-forward -n prometheus-system  svc/prometheus-grafana 3000:80 &
+wait
 
-kubectl run curl-loadtest --image=radial/busyboxplus:curl --restart=Never --rm -it -- sh -c '
+kubectl run curl --image=radial/busyboxplus:curl --restart=Never --rm -it -- sh -c '
   while true; do
     echo "Sending request to fruit stand app...";
     curl -X POST -H "Content-Type: application/json" rayservice-sample-serve-svc:8000/fruit/ -d "[\"MANGO\", 2]";
