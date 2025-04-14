@@ -65,17 +65,16 @@ spec:
         name: nvidia-device-plugin-ds
     spec:
       tolerations:
-      - key: "sku"
-        operator: "Equal"
-        value: "gpu"
-        effect: "NoSchedule"
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
       # Mark this pod as a critical add-on; when enabled, the critical add-on
       # scheduler reserves resources for critical add-on pods so that they can
       # be rescheduled after a failure.
       # See https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
       priorityClassName: "system-node-critical"
       containers:
-      - image: nvcr.io/nvidia/k8s-device-plugin:v0.15.0
+      - image: nvcr.io/nvidia/k8s-device-plugin:v0.16.1
         name: nvidia-device-plugin-ctr
         env:
           - name: FAIL_ON_INIT_ERROR
